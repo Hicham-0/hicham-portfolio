@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Bodoni Punct";
+  src: url("/fonts/bodoni-punct.woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+002D, U+002F, U+2010-2015, U+2212, U+00B7;
+}
+
+@font-face {
+  font-family: "Bodoni Punct";
+  src: url("/fonts/bodoni-punct-italic.woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: italic;
+  font-display: swap;
+  unicode-range: U+002D, U+002F, U+2010-2015, U+2212, U+00B7;
+}
+
+:root {
+  --paper: #ecebe6;
+  --ink: #111111;
+  --night-sky: #0b0d13;
+  --klein: #1a31d0;
+  --klein-soft: #b4beff;
+  --stone: #5c5951;
+}
+
+* {
+  box-sizing: border-box;
+  border-color: rgba(17, 17, 17, 0.14);
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-bodoni), Georgia, serif;
+  font-optical-sizing: auto;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--klein);
+  color: var(--paper);
+}
+
+.grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.flow-dash {
+  stroke-dasharray: 3 9;
+  animation: flow 2.2s linear infinite;
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -48;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-dash {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
