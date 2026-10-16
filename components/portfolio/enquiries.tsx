@@ -65,11 +65,11 @@ export function Enquiries() {
           />
         </h2>
 
-        <div className="mt-14 grid gap-14 md:mt-20 md:grid-cols-12">
-          <Reveal className="md:col-span-7">
+        <div className="mt-14 grid gap-14 md:mt-20 lg:grid-cols-12">
+          <Reveal className="min-w-0 lg:col-span-7">
             <a
               href={`mailto:${EMAIL}`}
-              className="group inline-flex max-w-full items-baseline gap-3 break-all font-serif text-[clamp(1.25rem,4.8vw,4.4rem)] leading-none text-paper sm:break-normal"
+              className="group inline-flex max-w-full items-baseline gap-3 break-all font-serif text-[clamp(1.1rem,2.75vw,3.1rem)] leading-none text-paper sm:break-normal"
             >
               <span className="relative">
                 {EMAIL}
@@ -116,7 +116,7 @@ export function Enquiries() {
             </div>
           </Reveal>
 
-          <Reveal delay={0.1} className="md:col-span-4 md:col-start-9">
+          <Reveal delay={0.1} className="min-w-0 lg:col-span-4 lg:col-start-9">
             <ul className="flex flex-col">
               {particulars.map((c) => (
                 <li
