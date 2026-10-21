@@ -42,9 +42,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${bodoniModa.variable} ${newsreader.variable} ${ibmPlexMono.variable} bg-paper`}
+      className={`${bodoniModa.variable} ${newsreader.variable} ${ibmPlexMono.variable} relative bg-paper`}
     >
-      <body className="antialiased">
+      <body className="relative antialiased">
         {children}
         <div
           aria-hidden="true"

@@ -6,7 +6,7 @@ import { tenets } from "@/lib/portfolio-data";
 import { Reveal, SectionHead, container } from "./primitives";
 
 const statement =
-  "Good infrastructure behaves like a *fine* *movement* — a thousand parts in service of one quiet purpose. I am learning to build cloud platforms that keep perfect time: scaling without ceremony, failing without drama, and asking *nothing* of the people who depend on them.";
+  "The best systems are the ones you *never* *notice.* Complex beneath the surface, automatic in motion, and built to *last.*";
 
 const words = statement.split(" ").map((raw) => ({
   text: raw.replace(/\*/g, ""),
@@ -45,10 +45,10 @@ export function Foreword() {
   return (
     <section id="foreword" className="py-28 md:py-44">
       <div className={container}>
-        <SectionHead no="I" title="Foreword" note="A statement of intent" />
+        <SectionHead no="I" title="Foreword" note="Core principles" />
 
-        <div ref={ref} className="mt-16 md:mt-24">
-          <p className="max-w-6xl font-serif text-[clamp(2rem,4.4vw,5.1rem)] leading-[1.06] tracking-[-0.02em]">
+        <div ref={ref} className="relative mt-16 md:mt-24">
+          <p className="max-w-5xl font-serif text-[clamp(2.2rem,4.8vw,5.4rem)] leading-[1.04] tracking-[-0.025em]">
             {words.map((w, i) => (
               <span key={i}>
                 <Word
@@ -68,24 +68,24 @@ export function Foreword() {
             <li key={t.title} className="bg-paper">
               <Reveal
                 delay={i * 0.08}
-                className="group flex h-full flex-col p-0 pb-10 pt-8 md:p-8 md:pb-12"
+                className="group flex h-full flex-col p-6 pb-10 pt-8 md:p-8 md:pb-12"
               >
                 <div className="flex items-baseline justify-between">
-                  <span className="font-serif text-6xl leading-none transition-colors duration-700 group-hover:text-klein md:text-7xl">
-                    {t.numeral}
-                  </span>
-                  <span className="font-mono text-[12px] uppercase tracking-[0.16em] text-stone">
-                    {`Article ${i + 1}`}
+                  <span className="font-mono text-xs uppercase tracking-[0.18em] text-klein">
+                    {`0${i + 1} // ${t.numeral}`}
                   </span>
                 </div>
-                <h3 className="mt-10 font-mono text-[12px] uppercase tracking-[0.14em]">
+
+                <h3 className="mt-6 font-serif text-3xl font-normal tracking-[-0.02em] text-ink transition-colors duration-500 group-hover:text-klein md:text-4xl">
                   {t.title}
                 </h3>
-                <p className="mt-4 font-text text-xl leading-snug text-ink/80">
+
+                <p className="mt-4 font-text text-lg leading-snug text-ink/75">
                   {t.text}
                 </p>
+
                 <div className="mt-auto pt-10">
-                  <div className="h-px w-8 bg-ink transition-[width,background-color] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-full group-hover:bg-klein" />
+                  <div className="h-px w-10 bg-klein/50 transition-[width,background-color] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-full group-hover:bg-klein" />
                   <p className="mt-3 font-mono text-[11.5px] uppercase tracking-[0.14em] text-stone">
                     {t.spec}
                   </p>
