@@ -5,21 +5,11 @@ import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 const TAU = Math.PI * 2;
-const INTRO_MS = 2200;
+const INTRO_MS = 2000;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
-/**
- * High-Precision Horological Halftone Canvas (`movement.webp`).
- * - Fixes mobile resolution: uses a fine `3.4px` dot grid on `< 640px` viewports
- *   (yielding ~105x105 dots instead of 38x38) so all watch gears, screws, and bridges
- *   are crystal clear on iPhone screens.
- * - Full Touch + Mouse Responsiveness: responds immediately to finger drag (`touchmove` /
- *   `pointermove`) on mobile as well as mouse cursor on desktop.
- * - Continuous Living Animation: when idle (no finger/cursor inside), a gentle orbital
- *   horological lens and subtle wave breathe continuously across the watch movement.
- */
 export function Halftone({
   srcs,
   progress,
@@ -53,13 +43,12 @@ export function Halftone({
     let image: HTMLImageElement | null = null;
     let start = 0;
     let raf = 0;
-    let running = false;
     let visible = true;
-    let lastInteraction = -1e9;
+    let isPointerInside = false;
     const mouse = { x: 0, y: 0, tx: 0, ty: 0, s: 0, ts: 0, seen: false };
 
     const sample = () => {
-      if (!w || !h) return;
+      if (!w || !h || !image) return;
       cols = Math.ceil(w / gap) + 1;
       rows = Math.ceil(h / gap) + 1;
       const off = document.createElement("canvas");
@@ -68,47 +57,41 @@ export function Halftone({
       const o = off.getContext("2d", { willReadFrequently: true });
       if (!o) return;
 
-      tones = new Float32Array(cols * rows);
-      if (image) {
-        o.fillStyle = "#fff";
-        o.fillRect(0, 0, cols, rows);
-        const fit = w < 768 ? Math.min : Math.max;
-        const scale = fit(cols / image.width, rows / image.height) * 0.96;
-        const iw = image.width * scale;
-        const ih = image.height * scale;
-        o.drawImage(image, (cols - iw) / 2, (rows - ih) / 2, iw, ih);
-        const data = o.getImageData(0, 0, cols, rows).data;
-        for (let i = 0; i < cols * rows; i++) {
-          const lum =
-            (0.299 * data[i * 4] +
-              0.587 * data[i * 4 + 1] +
-              0.114 * data[i * 4 + 2]) /
-            255;
-          // Sharper gamma on small screens so watch gear teeth stand out crisply
-          tones[i] = Math.pow(1 - lum, w < 768 ? 1.28 : 1.15);
-        }
+      const nextTones = new Float32Array(cols * rows);
+      o.fillStyle = "#fff";
+      o.fillRect(0, 0, cols, rows);
+      const fit = w < 768 ? Math.min : Math.max;
+      const scale = fit(cols / image.width, rows / image.height) * 0.96;
+      const iw = image.width * scale;
+      const ih = image.height * scale;
+      o.drawImage(image, (cols - iw) / 2, (rows - ih) / 2, iw, ih);
+      const data = o.getImageData(0, 0, cols, rows).data;
+      for (let i = 0; i < cols * rows; i++) {
+        const lum =
+          (0.299 * data[i * 4] +
+            0.587 * data[i * 4 + 1] +
+            0.114 * data[i * 4 + 2]) /
+          255;
+        nextTones[i] = Math.pow(1 - lum, w < 768 ? 1.28 : 1.15);
       }
+      tones = nextTones;
       lensDots = new Float32Array(cols * rows * 3);
     };
 
     const draw = (now: number) => {
-      if (!visible) {
-        running = false;
+      if (!visible || !tones.length) {
+        raf = requestAnimationFrame(draw);
         return;
       }
       if (!start) start = now;
 
       const t = reduce ? 1 : clamp01((now - start) / INTRO_MS);
 
-      // When user hasn't touched/moved mouse in the last 1.6s, smoothly orbit the
-      // horological lens so the watch movement is always visibly animated on mobile & desktop.
-      const isIdle = !reduce && now - lastInteraction > 1600;
-      if (isIdle) {
-        const orbitRadiusX = w * (w < 768 ? 0.24 : 0.22);
-        const orbitRadiusY = h * (w < 768 ? 0.24 : 0.22);
-        mouse.tx = w * 0.5 + Math.cos(now * 0.0011) * orbitRadiusX;
-        mouse.ty = h * 0.5 + Math.sin(now * 0.0014) * orbitRadiusY;
-        mouse.ts = w < 768 ? 0.88 : 0.65;
+      // Automatically glide the blue lens whenever the cursor/finger is NOT inside the watch
+      if (!isPointerInside && !reduce) {
+        mouse.tx = w * (0.5 + 0.23 * Math.cos(now * 0.0011));
+        mouse.ty = h * (0.5 + 0.23 * Math.sin(now * 0.0014));
+        mouse.ts = 0.85;
         if (!mouse.seen) {
           mouse.x = mouse.tx;
           mouse.y = mouse.ty;
@@ -118,17 +101,12 @@ export function Halftone({
 
       mouse.x += (mouse.tx - mouse.x) * 0.16;
       mouse.y += (mouse.ty - mouse.y) * 0.16;
-      mouse.s += (mouse.ts - mouse.s) * 0.1;
+      mouse.s += (mouse.ts - mouse.s) * 0.12;
 
       const scroll = progress?.get() ?? 0;
       const scrollCloudPart = clamp01(scroll * 1.35);
       const fade = 1 - clamp01(scroll * 1.2);
       const maxR = gap * (w < 768 ? 0.58 : 0.6);
-
-      if (!tones.length) {
-        raf = requestAnimationFrame(draw);
-        return;
-      }
 
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = ink;
@@ -169,7 +147,7 @@ export function Halftone({
               const k = 1 - d / lensR;
               lens = k * k * (3 - 2 * k) * mouse.s;
               r = r * (1 + lens * 0.85) + lens * maxR * 0.15 * local * fade;
-              const push = w < 768 ? 8 : 13;
+              const push = w < 768 ? 8 : 14;
               x += (dx / d) * lens * push;
               y += (dy / d) * lens * push;
             }
@@ -202,16 +180,6 @@ export function Halftone({
         ctx.fill();
       }
 
-      if (!reduce) {
-        raf = requestAnimationFrame(draw);
-      } else {
-        running = false;
-      }
-    };
-
-    const kick = () => {
-      if (running || !visible) return;
-      running = true;
       raf = requestAnimationFrame(draw);
     };
 
@@ -224,20 +192,19 @@ export function Halftone({
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      // Fine dot pitch (3.4px) on mobile so watch gears are crisp instead of coarse blobs
       gap = w < 640 ? 3.4 : w < 1024 ? 5.2 : 6.8;
       lensR = w < 640 ? 78 : w < 1024 ? 125 : 170;
       sample();
-      kick();
     };
 
     const aim = (clientX: number, clientY: number) => {
       const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
       const x = clientX - rect.left;
       const y = clientY - rect.top;
       const inside = x >= 0 && y >= 0 && x <= rect.width && y <= rect.height;
+      isPointerInside = inside;
       if (inside) {
-        lastInteraction = performance.now();
         mouse.tx = x;
         mouse.ty = y;
         if (!mouse.seen) {
@@ -246,61 +213,69 @@ export function Halftone({
           mouse.seen = true;
         }
         mouse.ts = 1;
-      } else {
-        mouse.ts = 0;
       }
-      kick();
     };
 
-    const onPointerMove = (e: PointerEvent) => {
-      aim(e.clientX, e.clientY);
-    };
-
-    const onTouchStart = (e: TouchEvent) => {
+    const onMouseMove = (e: MouseEvent) => aim(e.clientX, e.clientY);
+    const onPointerMove = (e: PointerEvent) => aim(e.clientX, e.clientY);
+    const onTouch = (e: TouchEvent) => {
       const tp = e.touches[0];
       if (tp) aim(tp.clientX, tp.clientY);
     };
-
-    const onTouchMove = (e: TouchEvent) => {
-      const tp = e.touches[0];
-      if (tp) aim(tp.clientX, tp.clientY);
+    const onTouchEnd = () => {
+      isPointerInside = false;
+    };
+    const onLeave = () => {
+      isPointerInside = false;
     };
 
     const primarySrc = srcs[0] || "/images/movement.webp";
     const img = new Image();
-    img.onload = () => {
+    const handleImageLoaded = () => {
       image = img;
       start = 0;
       resize();
     };
+    img.onload = handleImageLoaded;
     img.src = primarySrc;
+    if (img.complete && img.naturalWidth > 0) {
+      handleImageLoaded();
+    }
 
     const io = new IntersectionObserver(
       ([entry]) => {
         visible = entry.isIntersecting;
-        if (visible) kick();
       },
       { threshold: 0 }
     );
     io.observe(canvas);
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
+
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
     window.addEventListener("pointermove", onPointerMove, { passive: true });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-    const unsub = progress?.on("change", kick);
+    window.addEventListener("pointerover", onPointerMove, { passive: true });
+    window.addEventListener("touchstart", onTouch, { passive: true });
+    window.addEventListener("touchmove", onTouch, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    document.documentElement.addEventListener("mouseleave", onLeave);
+
+    raf = requestAnimationFrame(draw);
 
     return () => {
       cancelAnimationFrame(raf);
       io.disconnect();
       ro.disconnect();
+      window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      unsub?.();
+      window.removeEventListener("pointerover", onPointerMove);
+      window.removeEventListener("touchstart", onTouch);
+      window.removeEventListener("touchmove", onTouch);
+      window.removeEventListener("touchend", onTouchEnd);
+      document.documentElement.removeEventListener("mouseleave", onLeave);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [srcs.join("|"), progress]);
+  }, [srcs.join("|")]);
 
   return (
     <canvas

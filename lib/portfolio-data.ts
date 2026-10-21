@@ -53,15 +53,15 @@ export const projects: Project[] = [
     role: "Cloud & DevOps Intern",
     estimate: "Zero-downtime releases",
     summary:
-      "A delivery pipeline where a new version arrives beside the old one, and traffic moves only when it is ready.",
+      "Multi-AZ container infrastructure on AWS with automated Blue/Green releases.",
     brief:
-      "The task was to make releases uneventful: infrastructure with no single point of failure, and a pipeline that could ship an update without taking the service down.",
+      "Make production releases uneventful: a fault-tolerant AWS network with zero single points of failure and zero-downtime deployments.",
     composition:
-      "The network is declared once in Terraform, as a multi-AZ VPC with load balancers and NAT gateways. CodePipeline and CodeBuild take a commit to a Docker image, and Blue/Green deployments bring the new version up on ECS Fargate beside the live one before traffic is shifted.",
+      "Declared in Terraform across Multi-AZ subnets. CodePipeline and CodeBuild package commits into Docker images, shifting live traffic across ECS Fargate via Blue/Green target groups.",
     outcomes: [
       { value: "Multi-AZ", label: "No single point of failure" },
       { value: "Blue/Green", label: "Releases without downtime" },
-      { value: "Fargate", label: "No servers to manage" },
+      { value: "Fargate", label: "Serverless container compute" },
     ],
     stack: [
       "Terraform",
@@ -99,17 +99,17 @@ export const projects: Project[] = [
     cloud: "AWS",
     client: "Independent project",
     role: "Designer and builder",
-    estimate: "No servers to manage",
+    estimate: "Scale-to-zero compute",
     summary:
-      "A backend that wakes only when an image arrives, and rests the rest of the time.",
+      "An event-driven serverless backend that processes media on upload and scales to zero at rest.",
     brief:
-      "Images should be processed the moment they arrive, without a server waiting for them. The goal was a fully serverless backend, with a frontend that loads quickly from anywhere.",
+      "Process high-resolution images the instant they land in storage—without idle servers or public bucket exposure.",
     composition:
-      "An upload to S3 raises an event that triggers a Lambda function, which processes the image asynchronously. The frontend is a static site on S3, served through CloudFront edge caching for low latency worldwide.",
+      "Direct S3 uploads trigger asynchronous AWS Lambda functions. Optimized assets are stored privately and served worldwide through CloudFront edge caching.",
     outcomes: [
-      { value: "Event-driven", label: "Triggered the instant a file lands" },
-      { value: "Serverless", label: "Nothing to patch or scale" },
-      { value: "Edge-cached", label: "Fast from anywhere" },
+      { value: "Event-driven", label: "Triggered on S3 upload" },
+      { value: "Serverless", label: "Zero idle compute cost" },
+      { value: "Edge-cached", label: "Global CloudFront delivery" },
     ],
     stack: ["S3", "Lambda", "CloudFront", "DynamoDB"],
     diagram: {
@@ -135,25 +135,25 @@ export const tenets = [
   {
     numeral: "I",
     title: "Resilience",
-    text: "Design so that no single failure takes the service down: more than one zone, more than one path.",
-    spec: "Multi-AZ · No single point of failure",
+    text: "Multi-zone architecture with zero single points of failure.",
+    spec: "Multi-AZ · Blast-radius isolation",
   },
   {
     numeral: "II",
     title: "Automation",
-    text: "If it can be written down, it can be reproduced. Infrastructure and delivery live in code, not in memory.",
+    text: "Every network rule and delivery pipeline declared in code.",
     spec: "Terraform · CodePipeline · CodeBuild",
   },
   {
     numeral: "III",
     title: "Continuity",
-    text: "Release without ceremony. A new version arrives beside the old, and traffic moves only when it is ready.",
-    spec: "Blue/Green · Zero-downtime releases",
+    text: "Blue/Green releases that shift live traffic without downtime.",
+    spec: "Blue/Green · ECS Fargate",
   },
   {
     numeral: "IV",
     title: "Isolation",
-    text: "Keep private things private: public and private subnets, narrow rules, nothing open by default.",
+    text: "Private subnets and strict least-privilege access by default.",
     spec: "VPC · Security Groups · Segmentation",
   },
 ];
@@ -163,21 +163,21 @@ export const inventory = [
     id: "compute",
     label: "Compute",
     word: "Compute",
-    text: "Virtual machines, containers and functions: where the work actually runs.",
+    text: "Elastic instances, stateless containers, and event-driven functions.",
     items: ["EC2", "Auto Scaling", "ECS", "Fargate", "Lambda"],
   },
   {
     id: "data",
     label: "Data and storage",
     word: "Data",
-    text: "Object storage that starts events, and a managed table for state.",
+    text: "Event-driven object storage, NoSQL state, and global edge caching.",
     items: ["S3", "DynamoDB", "CloudFront"],
   },
   {
     id: "delivery",
     label: "Delivery",
     word: "Delivery",
-    text: "From commit to running container, written in code and released Blue/Green.",
+    text: "Infrastructure as Code and automated Blue/Green container pipelines.",
     items: [
       "Terraform",
       "Docker",
@@ -191,7 +191,7 @@ export const inventory = [
     id: "network",
     label: "Network and security",
     word: "Network",
-    text: "Public and private subnets, narrow rules, nothing open by default.",
+    text: "Segmented VPCs, private subnets, and narrow stateful rules.",
     items: [
       "VPC",
       "Security Groups",
@@ -208,7 +208,7 @@ export const inventory = [
     id: "linux",
     label: "Linux",
     word: "Linux",
-    text: "The ground beneath it all: Red Hat Enterprise Linux, services, packages, and monitoring across hosts.",
+    text: "Red Hat Enterprise Linux administration and Zabbix host telemetry.",
     items: ["RHEL", "Services", "Packages", "Zabbix"],
   },
 ];
@@ -220,7 +220,7 @@ export const timeline = [
     role: "Cloud & DevOps Intern",
     company: "Smartovate LTD",
     place: "Remote, London",
-    text: "Designed fault-tolerant, multi-AZ AWS infrastructure with Terraform, and automated delivery with CodePipeline and CodeBuild using Blue/Green deployments. Containerized the app with Docker on ECS Fargate.",
+    text: "Architected Multi-AZ AWS infrastructure in Terraform and automated Blue/Green deployments on ECS Fargate.",
     medium: "Terraform · CodePipeline · Fargate",
   },
   {
@@ -229,7 +229,7 @@ export const timeline = [
     role: "DevOps Intern",
     company: "Navimar Systems",
     place: "Rabat, Morocco",
-    text: "Built an infrastructure monitoring framework across distributed Linux hosts with Zabbix, and tuned alert thresholds so problems surface earlier.",
+    text: "Built distributed Linux infrastructure monitoring and proactive alerting pipelines with Zabbix.",
     medium: "Zabbix · Linux",
   },
   {
@@ -238,7 +238,7 @@ export const timeline = [
     role: "Engineering student",
     company: "EMSI",
     place: "Rabat, Morocco",
-    text: "State Engineer’s Degree in Computer Engineering, Cyber Security & Networks.",
+    text: "State Engineer’s Degree in Computer Engineering — Cyber Security & Networks.",
     medium: "Networks · Security · Linux",
   },
 ];
