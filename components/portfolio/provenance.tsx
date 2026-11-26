@@ -1,25 +1,27 @@
 "use client";
 
-import { credentials, timeline } from "@/lib/portfolio-data";
+import { usePreferences } from "@/lib/preferences";
 import { Label, MaskLines, Reveal, SectionHead, container } from "./primitives";
 
 export function Provenance() {
+  const { t } = usePreferences();
+
   return (
-    <section id="provenance" className="py-28 md:py-44">
+    <section id="experience" className="py-28 md:py-44">
       <div className={container}>
         <SectionHead
-          no="IV"
-          title="Provenance"
-          note="Experience & education"
+          no="04"
+          title={t.nav.experience}
+          note={t.experience.note}
         />
 
         <div className="mt-16 md:mt-24">
           <h2 className="font-serif text-[clamp(2.8rem,7vw,8rem)] leading-[0.9] tracking-[-0.035em]">
             <MaskLines
               lines={[
-                "The making",
+                t.experience.title[0],
                 <span key="p" className="italic text-klein">
-                  of an engineer.
+                  {t.experience.title[1]}
                 </span>,
               ]}
             />
@@ -27,8 +29,8 @@ export function Provenance() {
         </div>
 
         <ol className="mt-16 md:mt-24">
-          {timeline.map((t, i) => (
-            <li key={t.no} className="border-t border-ink/20 last:border-b">
+          {t.experience.timeline.map((row, i) => (
+            <li key={row.no} className="border-t border-ink/20 last:border-b">
               <Reveal delay={i * 0.05}>
                 <div className="group relative overflow-hidden">
                   <span
@@ -38,30 +40,30 @@ export function Provenance() {
                   <div className="relative grid gap-4 px-5 py-8 transition-colors duration-500 [@media(hover:hover)]:group-hover:text-paper sm:px-6 md:grid-cols-12 md:items-baseline md:gap-6 md:px-8 md:py-11">
                     <div className="md:col-span-2">
                       <p className="font-mono text-[12px] uppercase tracking-[0.16em] text-stone transition-colors duration-500 [@media(hover:hover)]:group-hover:text-paper/85">
-                        {t.no}
+                        {row.no}
                       </p>
-                      <p className="mt-2 font-text text-xl">{t.years}</p>
+                      <p className="mt-2 font-text text-xl">{row.years}</p>
                     </div>
 
                     <div className="md:col-span-3">
                       <h3 className="font-serif text-4xl leading-none tracking-[-0.02em] lg:text-5xl">
-                        {t.company}
+                        {row.company}
                       </h3>
                       <p className="mt-3 font-mono text-[12px] uppercase tracking-[0.14em] text-klein transition-colors duration-500 [@media(hover:hover)]:group-hover:text-klein-soft">
-                        {t.role}
+                        {row.role}
                       </p>
                     </div>
 
                     <p className="font-text text-lg leading-snug text-ink/75 transition-colors duration-500 [@media(hover:hover)]:group-hover:text-paper/90 md:col-span-4">
-                      {t.text}
+                      {row.text}
                     </p>
 
                     <div className="flex flex-col justify-start border-t border-ink/10 pt-3 font-mono text-[11.5px] uppercase leading-relaxed tracking-[0.14em] text-stone transition-colors duration-500 [@media(hover:hover)]:group-hover:border-paper/15 [@media(hover:hover)]:group-hover:text-paper/85 md:col-span-3 md:items-end md:border-t-0 md:pt-0 md:text-right">
                       <p className="font-medium text-ink transition-colors duration-500 [@media(hover:hover)]:group-hover:text-paper">
-                        {t.place}
+                        {row.place}
                       </p>
                       <p className="mt-1 text-stone transition-colors duration-500 [@media(hover:hover)]:group-hover:text-paper/80">
-                        {t.medium}
+                        {row.medium}
                       </p>
                     </div>
                   </div>
@@ -73,15 +75,15 @@ export function Provenance() {
 
         <div className="mt-24 grid gap-10 md:mt-32 md:grid-cols-12">
           <div className="md:col-span-3">
-            <Label className="text-stone">Certifications</Label>
+            <Label className="text-stone">{t.experience.certifications}</Label>
           </div>
           <ul className="grid gap-px bg-ink/15 sm:grid-cols-2 md:col-span-9">
-            {credentials.map((c, i) => (
+            {t.experience.credentials.map((c, i) => (
               <li
                 key={c}
                 className="flex items-baseline gap-5 bg-paper px-4 py-5 sm:px-6"
               >
-                <span className="font-mono text-[11.5px] tracking-[0.15em] text-klein">{`L.${i + 1}`}</span>
+                <span className="font-mono text-[11.5px] tracking-[0.15em] text-klein">{`0${i + 1}`}</span>
                 <span className="font-text text-xl italic">{c}</span>
               </li>
             ))}

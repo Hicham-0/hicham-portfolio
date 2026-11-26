@@ -2,7 +2,7 @@
   "name": "hicham-el-hanafi-portfolio",
   "version": "3.0.0",
   "private": true,
-  "description": "Hicham El Hanafi — Catalogue Nº 26 · Infrastructure, Considered",
+  "description": "Hicham El Hanafi — Cloud & DevOps Engineer Portfolio",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

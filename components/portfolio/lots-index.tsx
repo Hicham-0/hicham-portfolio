@@ -4,14 +4,14 @@ import { AnimatePresence, motion, useMotionValue, useSpring } from "framer-motio
 import { ArrowUpRight } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { EASE, projects } from "@/lib/portfolio-data";
+import { usePreferences } from "@/lib/preferences";
 import { cn } from "@/lib/utils";
 import { LotEntry } from "./lot-entry";
 import { Plate } from "./plate";
 import { MaskLines, SectionHead, container } from "./primitives";
 
-export const ROMAN = ["I", "II", "III", "IV", "V", "VI"];
-
 export function LotsIndex() {
+  const { t } = usePreferences();
   const [hover, setHover] = useState<number | null>(null);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const lastHover = useRef(0);
@@ -23,8 +23,10 @@ export function LotsIndex() {
 
   if (hover !== null) lastHover.current = hover;
   const shown = hover ?? lastHover.current;
+  const nextIndex = String(projects.length + 1).padStart(2, "0");
 
   const close = useCallback(() => {
+    setHover(null);
     setOpenIdx((idx) => {
       if (idx !== null) triggers.current[idx]?.focus({ preventScroll: true });
       return null;
@@ -32,17 +34,17 @@ export function LotsIndex() {
   }, []);
 
   return (
-    <section id="lots" className="pb-28 pt-8 md:pb-44">
+    <section id="projects" className="pb-28 pt-8 md:pb-44">
       <div className={container}>
-        <SectionHead no="II" title="The Lots" note="Two works · one reserved" />
+        <SectionHead no="02" title={t.nav.projects} note={t.projects.note} />
 
         <div className="mt-16 md:mt-24">
           <h2 className="font-serif text-[clamp(2.8rem,7vw,8rem)] leading-[0.9] tracking-[-0.035em]">
             <MaskLines
               lines={[
-                "Two works of",
+                t.projects.title[0],
                 <span key="q" className="italic text-klein">
-                  quiet architecture.
+                  {t.projects.title[1]}
                 </span>,
               ]}
             />
@@ -57,62 +59,70 @@ export function LotsIndex() {
           }}
           onMouseLeave={() => setHover(null)}
         >
-          {projects.map((p, i) => (
-            <li key={p.id} className="border-t border-ink/20">
-              <button
-                ref={(el) => {
-                  triggers.current[i] = el;
-                }}
-                type="button"
-                onClick={() => setOpenIdx(i)}
-                onMouseEnter={() => setHover(i)}
-                onFocus={() => setHover(i)}
-                onBlur={() => setHover(null)}
-                aria-haspopup="dialog"
-                className={cn(
-                  "group grid w-full grid-cols-12 items-baseline gap-x-4 py-7 text-left transition-opacity duration-700 md:py-10",
-                  hover !== null && hover !== i && "opacity-25"
-                )}
-              >
-                <span className="col-span-12 font-mono text-[12px] uppercase tracking-[0.16em] text-stone md:col-span-1">
-                  {`Lot ${p.index}`}
-                </span>
-                <span className="col-span-12 mt-2 font-serif text-[clamp(3rem,6.6vw,7.6rem)] leading-[0.88] tracking-[-0.035em] transition-[color,transform] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-3 group-hover:text-klein md:col-span-5 md:mt-0 md:group-hover:translate-x-6">
-                  {p.title}
-                </span>
-                <span className="col-span-12 mt-3 font-text text-lg italic leading-snug text-ink/70 md:col-span-3 md:mt-0">
-                  {p.subtitle}
-                </span>
-                <span className="col-span-6 mt-4 font-mono text-[12px] uppercase leading-relaxed tracking-[0.14em] text-stone md:col-span-1 md:mt-0">
-                  {p.cloud}
-                  <br />
-                  {p.year}
-                </span>
-                <span className="col-span-6 mt-4 flex items-baseline justify-end gap-3 font-mono text-[12px] uppercase tracking-[0.14em] md:col-span-2 md:mt-0">
-                  <span className="hidden text-stone lg:inline">Est.</span>
-                  <span>{p.estimate}</span>
-                  <ArrowUpRight
-                    aria-hidden="true"
-                    strokeWidth={1.25}
-                    className="size-4 self-center transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:rotate-45 group-hover:text-klein"
-                  />
-                </span>
-              </button>
-            </li>
-          ))}
+          {projects.map((p, i) => {
+            const copy = t.projects.copy[p.id];
+            return (
+              <li key={p.id} className="border-t border-ink/20">
+                <button
+                  ref={(el) => {
+                    triggers.current[i] = el;
+                  }}
+                  type="button"
+                  onClick={() => {
+                    setHover(null);
+                    setOpenIdx(i);
+                  }}
+                  onMouseEnter={() => setHover(i)}
+                  onFocus={(e) => {
+                    if (e.currentTarget.matches(":focus-visible")) setHover(i);
+                  }}
+                  onBlur={() => setHover(null)}
+                  aria-haspopup="dialog"
+                  aria-label={`${p.title} — ${copy.subtitle}. ${t.projects.open}`}
+                  className={cn(
+                    "group grid w-full grid-cols-12 items-baseline gap-x-4 py-7 text-left transition-opacity duration-700 md:py-10",
+                    hover !== null && hover !== i && "opacity-25"
+                  )}
+                >
+                  <span className="col-span-12 font-mono text-[12px] uppercase tracking-[0.16em] text-stone md:col-span-1">
+                    {p.index}
+                  </span>
+                  <span className="col-span-12 mt-2 font-serif text-[clamp(3rem,6.6vw,7.6rem)] leading-[0.88] tracking-[-0.035em] transition-[color,transform] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-3 group-hover:text-klein md:col-span-5 md:mt-0 md:group-hover:translate-x-6">
+                    {p.title}
+                  </span>
+                  <span className="col-span-12 mt-3 font-text text-lg italic leading-snug text-ink/70 md:col-span-3 md:mt-0">
+                    {copy.subtitle}
+                  </span>
+                  <span className="col-span-6 mt-4 font-mono text-[12px] uppercase leading-relaxed tracking-[0.14em] text-stone md:col-span-1 md:mt-0">
+                    {p.cloud}
+                    <br />
+                    {p.year}
+                  </span>
+                  <span className="col-span-6 mt-4 flex items-baseline justify-end gap-3 text-right font-mono text-[12px] uppercase tracking-[0.14em] md:col-span-2 md:mt-0">
+                    <span>{copy.highlight}</span>
+                    <ArrowUpRight
+                      aria-hidden="true"
+                      strokeWidth={1.25}
+                      className="size-4 shrink-0 self-center transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:rotate-45 group-hover:text-klein"
+                    />
+                  </span>
+                </button>
+              </li>
+            );
+          })}
           <li className="border-y border-ink/20">
             <a
-              href="#enquiries"
+              href="#contact"
               className="group grid w-full grid-cols-12 items-baseline gap-x-4 py-7 md:py-10"
             >
               <span className="col-span-12 font-mono text-[12px] uppercase tracking-[0.16em] text-stone md:col-span-1">
-                Lot 03
+                {nextIndex}
               </span>
               <span className="col-span-12 mt-2 font-serif text-[clamp(3rem,6.6vw,7.6rem)] italic leading-[0.88] tracking-[-0.035em] text-klein transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-3 md:col-span-5 md:mt-0 md:group-hover:translate-x-6">
-                Reserved
+                {t.projects.next.title}
               </span>
               <span className="col-span-12 mt-3 font-text text-lg italic leading-snug text-ink/80 md:col-span-3 md:mt-0">
-                Available for a 6-month end-of-studies internship (PFE).
+                {t.projects.next.text}
               </span>
               <span className="col-span-6 mt-4 font-mono text-[12px] uppercase leading-relaxed tracking-[0.14em] text-stone md:col-span-1 md:mt-0">
                 AWS
@@ -120,7 +130,13 @@ export function LotsIndex() {
                 2027
               </span>
               <span className="col-span-6 mt-4 flex items-baseline justify-end gap-3 font-mono text-[12px] uppercase tracking-[0.14em] md:col-span-2 md:mt-0">
-                <span>Enquire</span>
+                <span className="relative">
+                  {t.projects.next.cta}
+                  <span
+                    aria-hidden="true"
+                    className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-current transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100"
+                  />
+                </span>
               </span>
             </a>
           </li>
@@ -161,7 +177,7 @@ export function LotsIndex() {
             </AnimatePresence>
           </div>
           <div className="flex justify-between border-t border-ink/15 px-3 py-2 font-mono text-[9.5px] uppercase tracking-[0.15em] text-stone">
-            <span>{`Plate ${ROMAN[shown]}`}</span>
+            <span>{`${t.projects.schematic} ${projects[shown].index}`}</span>
             <span>{projects[shown].title}</span>
           </div>
         </motion.div>

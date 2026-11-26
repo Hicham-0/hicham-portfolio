@@ -21,12 +21,18 @@
 }
 
 :root {
+  color-scheme: light;
   --paper: #ecebe6;
   --ink: #111111;
-  --night-sky: #0b0d13;
+  --stone: #5c5951;
   --klein: #1a31d0;
   --klein-soft: #b4beff;
-  --stone: #5c5951;
+  --night-sky: #0b0d13;
+
+  --halftone-dim: #3d3b36;
+  --halftone-mid: #141414;
+  --halftone-lens: #1a31d0;
+  --halftone-peak: #2a46f0;
 }
 
 * {
@@ -53,6 +59,23 @@ body {
 ::selection {
   background: var(--klein);
   color: var(--paper);
+}
+
+/* Language-neutral markup for elements painted before hydration (preloader). */
+html[lang="fr"] [data-lang="en"],
+html:not([lang="fr"]) [data-lang="fr"] {
+  display: none;
+}
+
+.sky-gradient {
+  background: linear-gradient(
+    180deg,
+    #ecebe6 0%,
+    #aeb4c4 14%,
+    #2c3548 36%,
+    #111622 68%,
+    #0b0d13 100%
+  );
 }
 
 .grain {

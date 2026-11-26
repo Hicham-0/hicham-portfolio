@@ -5,10 +5,9 @@ import { useEffect, useState } from "react";
 import { EASE } from "@/lib/portfolio-data";
 
 /**
- * Cinematic Horological Entry Ceremony (~2.8s load + 1.25s silky curtain opening).
- * Features a rotating escapement dial, sweeping progress arc, live 000 -> 100 counter,
- * and masked editorial typography on warm archival paper (#ecebe6), then parts smoothly
- * into the Hero with zero jarring color flash.
+ * Horological entry ceremony (~2.65s load + 1.22s curtain opening).
+ * Uses theme CSS variables (`var(--ink)`, `var(--klein)`) and `[data-lang]`
+ * attributes so both theme and language render accurately before hydration.
  */
 export function Preloader() {
   const [progress, setProgress] = useState(0);
@@ -23,14 +22,13 @@ export function Preloader() {
     }
 
     let start: number | null = null;
-    const duration = 2650; // 2.65 seconds of smooth counting & dial rotation
+    const duration = 2650;
     let rafId = 0;
 
     const tick = (now: number) => {
       if (!start) start = now;
       const elapsed = now - start;
       const t = Math.min(1, elapsed / duration);
-      // Smooth quintic ease-in-out
       const eased =
         t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2;
       setProgress(Math.round(eased * 100));
@@ -58,7 +56,7 @@ export function Preloader() {
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 z-[100] overflow-hidden"
     >
-      {/* Top Archival Curtain */}
+      {/* Top Curtain */}
       <motion.div
         initial={{ y: "0%" }}
         animate={open ? { y: "-102%" } : { y: "0%" }}
@@ -70,8 +68,11 @@ export function Preloader() {
           transition={{ duration: 0.45, ease: EASE }}
           className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.18em] text-stone"
         >
-          <span>Catalogue Nº 26</span>
-          <span>Rabat · Morocco</span>
+          <span>Hicham El Hanafi</span>
+          <span>
+            <span data-lang="en">Rabat · Morocco</span>
+            <span data-lang="fr">Rabat · Maroc</span>
+          </span>
         </motion.div>
 
         <motion.div
@@ -99,7 +100,7 @@ export function Preloader() {
                     y1="4"
                     x2="70"
                     y2={i % 6 === 0 ? "10" : "7"}
-                    stroke="#111111"
+                    stroke="var(--ink)"
                     strokeOpacity={i % 6 === 0 ? "0.45" : "0.2"}
                     strokeWidth="1"
                     transform={`rotate(${angle} 70 70)`}
@@ -113,18 +114,18 @@ export function Preloader() {
                 cy="70"
                 r={radius}
                 fill="none"
-                stroke="#111111"
-                strokeOpacity="0.12"
+                stroke="var(--ink)"
+                strokeOpacity="0.14"
                 strokeWidth="1"
               />
 
-              {/* Sweeping Klein Blue Horological Arc */}
+              {/* Sweeping Cobalt Horological Arc */}
               <circle
                 cx="70"
                 cy="70"
                 r={radius}
                 fill="none"
-                stroke="#1a31d0"
+                stroke="var(--klein)"
                 strokeWidth="1.5"
                 strokeDasharray={circumference}
                 strokeDashoffset={strokeDashoffset}
@@ -138,14 +139,14 @@ export function Preloader() {
                 {String(progress).padStart(2, "0")}
               </span>
               <span className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-klein">
-                Calibre 26
+                Cloud · DevOps
               </span>
             </div>
           </div>
         </motion.div>
       </motion.div>
 
-      {/* Bottom Archival Curtain */}
+      {/* Bottom Curtain */}
       <motion.div
         initial={{ y: "0%" }}
         animate={open ? { y: "102%" } : { y: "0%" }}
@@ -161,7 +162,12 @@ export function Preloader() {
             Hanafi<span className="text-klein">.</span>
           </p>
           <p className="mt-2 font-text text-base italic text-stone md:text-lg">
-            “A thousand parts in service of one quiet purpose.”
+            <span data-lang="en">
+              “A thousand parts in service of one quiet purpose.”
+            </span>
+            <span data-lang="fr">
+              « Mille pièces au service d’une seule précision. »
+            </span>
           </p>
 
           {/* Expanding Hairline Progress Bar */}
@@ -178,7 +184,10 @@ export function Preloader() {
           transition={{ duration: 0.45, ease: EASE }}
           className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.18em] text-stone"
         >
-          <span>Infrastructure, Considered</span>
+          <span>
+            <span data-lang="en">Infrastructure, Considered</span>
+            <span data-lang="fr">L’infrastructure, pensée</span>
+          </span>
           <span>{`${String(progress).padStart(3, "0")} %`}</span>
         </motion.div>
       </motion.div>

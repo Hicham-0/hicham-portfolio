@@ -4,10 +4,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { EASE, projects } from "@/lib/portfolio-data";
+import { usePreferences } from "@/lib/preferences";
 import { Plate } from "./plate";
 import { Label, MaskLines } from "./primitives";
-
-const ROMAN = ["I", "II", "III", "IV", "V", "VI"];
 
 function Rise({
   children,
@@ -45,7 +44,9 @@ export function LotEntry({
   onClose: () => void;
   onNavigate: (i: number) => void;
 }) {
-  const p = projects[index];
+  const { t } = usePreferences();
+  const m = t.modal;
+  const p = { ...projects[index], ...t.projects.copy[projects[index].id] };
   const n = projects.length;
   const prev = (index - 1 + n) % n;
   const next = (index + 1) % n;
@@ -76,10 +77,10 @@ export function LotEntry({
   }, [index]);
 
   const details = [
-    { k: "Commissioned by", v: p.client },
-    { k: "Role", v: p.role },
-    { k: "Estate", v: p.cloud },
-    { k: "Year", v: p.year },
+    { k: m.details.client, v: p.client },
+    { k: m.details.role, v: p.role },
+    { k: m.details.cloud, v: p.cloud },
+    { k: m.details.year, v: p.year },
   ];
 
   return (
@@ -103,21 +104,21 @@ export function LotEntry({
             className="inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.16em] text-stone transition-colors hover:text-ink"
           >
             <ArrowLeft className="size-4" />
-            <span>Back to Catalogue</span>
+            <span>{m.back}</span>
           </button>
 
           <span className="hidden font-mono text-[12px] uppercase tracking-[0.16em] text-stone md:block">
-            {`Catalogue Nº 26 — Lot ${p.index} / 0${n}`}
+            {`${m.counter} ${p.index} / 0${n}`}
           </span>
 
           <button
             ref={closeRef}
             type="button"
             onClick={onClose}
-            aria-label="Close project view"
+            aria-label={m.closeAria}
             className="group flex items-center gap-3 border border-ink/25 bg-paper px-3.5 py-1.5 font-mono text-[12px] uppercase tracking-[0.16em] text-ink transition-colors hover:border-klein hover:bg-klein hover:text-paper"
           >
-            <span>Close</span>
+            <span>{m.close}</span>
             <X
               aria-hidden="true"
               strokeWidth={1.5}
@@ -138,7 +139,7 @@ export function LotEntry({
           <div className="grid gap-10 md:grid-cols-12 md:items-end">
             <div className="md:col-span-7">
               <Rise delay={0.2}>
-                <Label className="text-klein">{`Lot ${p.index} · ${p.cloud} · ${p.year}`}</Label>
+                <Label className="text-klein">{`${p.index} · ${p.cloud} · ${p.year}`}</Label>
               </Rise>
               <h2
                 id="lot-title"
@@ -167,8 +168,8 @@ export function LotEntry({
                 </div>
               </div>
               <figcaption className="mt-3 flex flex-col justify-between gap-1 font-mono text-[11.5px] uppercase tracking-[0.15em] text-stone md:flex-row">
-                <span>{`Plate ${ROMAN[index]}. ${p.title}, schematic.`}</span>
-                <span>Ink and Klein blue on screen · Reproduced at actual scale</span>
+                <span>{`Fig. ${p.index} — ${p.title}, ${m.figure}.`}</span>
+                <span>{m.figureNote}</span>
               </figcaption>
             </figure>
           </Rise>
@@ -186,7 +187,7 @@ export function LotEntry({
                 ))}
                 <div className="border-y border-ink/15 py-4">
                   <dt className="font-mono text-[11.5px] uppercase tracking-[0.16em] text-stone">
-                    Medium
+                    {m.details.stack}
                   </dt>
                   <dd className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[12px] uppercase tracking-[0.12em]">
                     {p.stack.map((s) => (
@@ -199,13 +200,13 @@ export function LotEntry({
 
             <div className="grid gap-12 md:col-span-8 md:col-start-5 md:grid-cols-2">
               <Rise delay={0.15}>
-                <Label className="text-stone">The commission</Label>
+                <Label className="text-stone">{m.challenge}</Label>
                 <p className="mt-4 font-text text-xl leading-relaxed first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:text-7xl first-letter:leading-[0.8] first-letter:text-klein">
                   {p.brief}
                 </p>
               </Rise>
               <Rise delay={0.25}>
-                <Label className="text-stone">The composition</Label>
+                <Label className="text-stone">{m.solution}</Label>
                 <p className="mt-4 font-text text-xl leading-relaxed text-ink/80">
                   {p.composition}
                 </p>
@@ -216,11 +217,11 @@ export function LotEntry({
           <div className="mt-20 grid gap-px bg-ink/15 md:mt-28 md:grid-cols-3">
             {p.outcomes.map((o, i) => (
               <Rise
-                key={o.label}
+                key={i}
                 delay={0.1 + i * 0.08}
                 className="bg-paper py-8 md:px-8 md:py-10"
               >
-                <p className="font-mono text-[11.5px] uppercase tracking-[0.16em] text-stone">{`Measured · 0${i + 1}`}</p>
+                <p className="font-mono text-[11.5px] uppercase tracking-[0.16em] text-stone">{`${m.outcome} · 0${i + 1}`}</p>
                 <p className="mt-6 font-serif text-[clamp(3.2rem,5.8vw,6.2rem)] leading-none tracking-[-0.04em]">
                   {o.value}
                 </p>
@@ -232,7 +233,7 @@ export function LotEntry({
           </div>
 
           <nav
-            aria-label="Other lots"
+            aria-label={m.otherAria}
             className="mt-24 grid border-t border-ink/20 md:grid-cols-3"
           >
             <button
@@ -246,7 +247,7 @@ export function LotEntry({
                 className="size-5 transition-transform duration-700 group-hover:-translate-x-2"
               />
               <span>
-                <span className="block font-mono text-[11.5px] uppercase tracking-[0.16em] text-stone">{`Previous · Lot ${projects[prev].index}`}</span>
+                <span className="block font-mono text-[11.5px] uppercase tracking-[0.16em] text-stone">{`${m.previous} · ${projects[prev].index}`}</span>
                 <span className="mt-1 block font-serif text-3xl italic transition-colors duration-500 group-hover:text-klein md:text-4xl">
                   {projects[prev].title}
                 </span>
@@ -258,7 +259,7 @@ export function LotEntry({
               onClick={onClose}
               className="flex items-center justify-center border-t border-ink/20 py-8 font-mono text-[12px] uppercase tracking-[0.18em] text-stone transition-colors hover:text-klein md:border-r md:border-t-0"
             >
-              Return to All Lots ×
+              {`${m.all} ×`}
             </button>
 
             <button
@@ -267,7 +268,7 @@ export function LotEntry({
               className="group flex items-center justify-end gap-5 border-t border-ink/20 py-8 text-right md:border-t-0"
             >
               <span>
-                <span className="block font-mono text-[11.5px] uppercase tracking-[0.16em] text-stone">{`Next · Lot ${projects[next].index}`}</span>
+                <span className="block font-mono text-[11.5px] uppercase tracking-[0.16em] text-stone">{`${m.next} · ${projects[next].index}`}</span>
                 <span className="mt-1 block font-serif text-3xl italic transition-colors duration-500 group-hover:text-klein md:text-4xl">
                   {projects[next].title}
                 </span>

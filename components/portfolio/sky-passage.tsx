@@ -2,16 +2,11 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useRef } from "react";
+import { usePreferences } from "@/lib/preferences";
 import { container } from "./primitives";
 
-/**
- * Multi-Layer Volumetric Cloud & Stratospheric Horizon Passage ("From Rabat, building the quiet systems...").
- * - Fixes the coordinate offset bug that hid clouds on wide laptop screens: gradients are now
- *   drawn in local `(0, 0)` coordinates after `ctx.translate(cx, cy)` and scaled proportionally
- *   to viewport width (`w`) so both 1920px laptops and 393px phones see rich, realistic
- *   drifting cumulus strata, atmospheric waves, and parting cloud curtains.
- */
 export function SkyPassage() {
+  const { t } = usePreferences();
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -39,7 +34,6 @@ export function SkyPassage() {
     let h = 0;
     let rafId = 0;
 
-    // 24 multi-layered volumetric cloud banks + horizon strata waves
     const cloudBanks = Array.from({ length: 24 }, (_, i) => ({
       xNorm: (i / 24) * 1.4 - 0.2,
       yNorm: 0.18 + ((i * 41) % 72) / 100,
@@ -47,7 +41,7 @@ export function SkyPassage() {
       aspect: 0.22 + (i % 4) * 0.06,
       speed: (i % 2 === 0 ? 1 : -1) * (0.000028 + (i % 4) * 0.000012),
       alpha: 0.07 + (i % 4) * 0.025,
-      tint: i % 3, // 0 = glacial blue, 1 = sunlit ivory mist, 2 = soft twilight slate
+      tint: i % 3,
       phase: i * 1.7,
     }));
 
@@ -67,7 +61,6 @@ export function SkyPassage() {
       ctx.clearRect(0, 0, w, h);
       const s = scrollYProgress.get();
 
-      // 1. Draw flowing atmospheric horizon wave ribbons across full width
       for (let band = 0; band < 5; band++) {
         const baseY = h * (0.28 + band * 0.14) - (s - 0.5) * 60;
         const amp = 18 + band * 8;
@@ -99,7 +92,6 @@ export function SkyPassage() {
         ctx.fill();
       }
 
-      // 2. Draw volumetric multi-puff cumulus cloud banks in local (0, 0) space!
       for (let i = 0; i < cloudBanks.length; i++) {
         const c = cloudBanks[i];
         let wrappedX = (c.xNorm + now * c.speed) % 1.4;
@@ -110,7 +102,6 @@ export function SkyPassage() {
         const bobY = Math.sin(now * 0.0006 + c.phase) * 12;
         const cy = c.yNorm * h - parallaxY + bobY;
 
-        // Scale cloud width proportionally to screen width (both mobile & laptop!)
         const rx = Math.max(150, w * c.widthFactor);
         const ry = rx * c.aspect;
 
@@ -118,7 +109,6 @@ export function SkyPassage() {
         ctx.translate(cx, cy);
         ctx.scale(1, ry / rx);
 
-        // FIXED: Gradient centered at (0, 0) inside the translated coordinate system!
         const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
         if (c.tint === 0) {
           grad.addColorStop(0, `rgba(180, 190, 255, ${(c.alpha * 1.65).toFixed(3)})`);
@@ -151,17 +141,14 @@ export function SkyPassage() {
     };
   }, [scrollYProgress]);
 
+  const [q1, q2, q3, q4] = t.passage.quote;
+
   return (
     <section
       ref={sectionRef}
-      aria-label="Passage from Rabat to the global cloud"
-      className="relative overflow-hidden py-36 text-paper md:py-56"
-      style={{
-        background:
-          "linear-gradient(180deg, #ecebe6 0%, #aeb4c4 14%, #2c3548 36%, #111622 68%, #0b0d13 100%)",
-      }}
+      aria-label={t.passage.aria}
+      className="sky-gradient relative overflow-hidden py-36 text-paper md:py-56"
     >
-      {/* Live Full-Width Volumetric Clouds Canvas */}
       <canvas
         ref={canvasRef}
         aria-hidden="true"
@@ -174,10 +161,11 @@ export function SkyPassage() {
       >
         <div className="relative z-10 mx-auto max-w-4xl text-center">
           <blockquote className="font-serif text-[clamp(2.2rem,5vw,5.25rem)] font-normal leading-[1.04] tracking-[-0.03em] text-paper [text-shadow:0_8px_32px_rgba(11,13,19,0.65)]">
-            “From Rabat, building{" "}
-            <span className="italic text-klein-soft">the quiet systems</span>{" "}
-            that let ideas travel{" "}
-            <span className="italic text-klein-soft">without borders.</span>”
+            {`“${q1} `}
+            <span className="italic text-klein-soft">{q2}</span>
+            {` ${q3} `}
+            <span className="italic text-klein-soft">{q4}</span>
+            {"”"}
           </blockquote>
         </div>
       </motion.div>
