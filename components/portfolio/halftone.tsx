@@ -6,9 +6,34 @@ import { cn } from "@/lib/utils";
 
 const TAU = Math.PI * 2;
 const INTRO_MS = 2000;
+const BUCKETS = 6;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+const smootherstep = (k: number) => k * k * k * (k * (k * 6 - 15) + 10);
+
+function parseHex(hex: string): [number, number, number] {
+  const clean = hex.replace("#", "").trim();
+  const full =
+    clean.length === 3
+      ? clean
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : clean;
+  const n = parseInt(full, 16);
+  if (Number.isNaN(n)) return [20, 20, 20];
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function mixHex(a: string, b: string, t: number): string {
+  const [ar, ag, ab] = parseHex(a);
+  const [br, bg, bb] = parseHex(b);
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const bl = Math.round(ab + (bb - ab) * t);
+  return `rgb(${r}, ${g}, ${bl})`;
+}
 
 export function Halftone({
   srcs,
@@ -27,19 +52,35 @@ export function Halftone({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // 6-tier archival ink + feathered Klein cobalt palette
     const styles = getComputedStyle(document.documentElement);
-    const ink = styles.getPropertyValue("--ink").trim() || "#111111";
-    const klein = styles.getPropertyValue("--klein").trim() || "#1a31d0";
+    const dim = styles.getPropertyValue("--halftone-dim").trim() || "#3d3b36";
+    const mid = styles.getPropertyValue("--halftone-mid").trim() || "#141414";
+    const lens = styles.getPropertyValue("--halftone-lens").trim() || "#1a31d0";
+    const peak = styles.getPropertyValue("--halftone-peak").trim() || "#2a46f0";
+    const palette: string[] = [
+      dim,
+      mid,
+      mixHex(mid, lens, 0.28),
+      mixHex(mid, lens, 0.62),
+      lens,
+      peak,
+    ];
+
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     let w = 0;
     let h = 0;
-    let gap = 7;
+    let gap = 5.4;
     let cols = 0;
     let rows = 0;
-    let lensR = 165;
+    let lensR = 210;
     let tones = new Float32Array(0);
-    let lensDots = new Float32Array(0);
+    let bucketData: Float32Array[] = Array.from(
+      { length: BUCKETS },
+      () => new Float32Array(0)
+    );
+    const bucketCounts = new Int32Array(BUCKETS);
     let image: HTMLImageElement | null = null;
     let start = 0;
     let raf = 0;
@@ -57,7 +98,8 @@ export function Halftone({
       const o = off.getContext("2d", { willReadFrequently: true });
       if (!o) return;
 
-      const nextTones = new Float32Array(cols * rows);
+      const total = cols * rows;
+      const nextTones = new Float32Array(total);
       o.fillStyle = "#fff";
       o.fillRect(0, 0, cols, rows);
       const fit = w < 768 ? Math.min : Math.max;
@@ -66,16 +108,25 @@ export function Halftone({
       const ih = image.height * scale;
       o.drawImage(image, (cols - iw) / 2, (rows - ih) / 2, iw, ih);
       const data = o.getImageData(0, 0, cols, rows).data;
-      for (let i = 0; i < cols * rows; i++) {
+
+      // Crisp tonal curve: drops faint paper haze cleanly while sharpening gear teeth & bridges.
+      const gamma = w < 768 ? 1.18 : 1.06;
+      for (let i = 0; i < total; i++) {
         const lum =
           (0.299 * data[i * 4] +
             0.587 * data[i * 4 + 1] +
             0.114 * data[i * 4 + 2]) /
           255;
-        nextTones[i] = Math.pow(1 - lum, w < 768 ? 1.28 : 1.15);
+        const raw = 1 - lum;
+        nextTones[i] =
+          raw < 0.06 ? 0 : Math.pow(clamp01((raw - 0.05) / 0.88), gamma);
       }
+
       tones = nextTones;
-      lensDots = new Float32Array(cols * rows * 3);
+      bucketData = Array.from(
+        { length: BUCKETS },
+        () => new Float32Array(total * 3)
+      );
     };
 
     const draw = (now: number) => {
@@ -87,11 +138,11 @@ export function Halftone({
 
       const t = reduce ? 1 : clamp01((now - start) / INTRO_MS);
 
-      // Automatically glide the blue lens whenever the cursor/finger is NOT inside the watch
+      // Gentle horological grazing orbit when cursor is outside the movement
       if (!isPointerInside && !reduce) {
-        mouse.tx = w * (0.5 + 0.23 * Math.cos(now * 0.0011));
-        mouse.ty = h * (0.5 + 0.23 * Math.sin(now * 0.0014));
-        mouse.ts = 0.85;
+        mouse.tx = w * (0.52 + 0.21 * Math.cos(now * 0.00085));
+        mouse.ty = h * (0.48 + 0.21 * Math.sin(now * 0.0011));
+        mouse.ts = 0.82;
         if (!mouse.seen) {
           mouse.x = mouse.tx;
           mouse.y = mouse.ty;
@@ -99,29 +150,30 @@ export function Halftone({
         }
       }
 
-      mouse.x += (mouse.tx - mouse.x) * 0.16;
-      mouse.y += (mouse.ty - mouse.y) * 0.16;
-      mouse.s += (mouse.ts - mouse.s) * 0.12;
+      mouse.x += (mouse.tx - mouse.x) * 0.14;
+      mouse.y += (mouse.ty - mouse.y) * 0.14;
+      mouse.s += (mouse.ts - mouse.s) * 0.1;
 
       const scroll = progress?.get() ?? 0;
       const scrollCloudPart = clamp01(scroll * 1.35);
       const fade = 1 - clamp01(scroll * 1.2);
-      const maxR = gap * (w < 768 ? 0.58 : 0.6);
+      const maxR = gap * (w < 768 ? 0.56 : 0.55);
 
       ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = ink;
-      ctx.beginPath();
-      let lensCount = 0;
+      bucketCounts.fill(0);
 
       const centerX = w * 0.5;
       const centerY = h * 0.5;
+      const lensR2 = lensR * lensR;
+      const push = w < 768 ? 4 : 7;
 
       for (let row = 0; row < rows; row++) {
         const offset = row % 2 ? gap / 2 : 0;
+        const rowBase = row * cols;
         for (let col = 0; col < cols; col++) {
-          const idx = row * cols + col;
+          const idx = rowBase + col;
           const tone = tones[idx];
-          if (tone < 0.05) continue;
+          if (tone < 0.06) continue;
 
           let x = col * gap + offset;
           let y = row * gap;
@@ -136,44 +188,55 @@ export function Halftone({
           const delay = ((w - x) / w) * 0.5 + (y / h) * 0.28;
           const local = easeOut(clamp01(t * 1.85 - delay));
           let r = tone * maxR * local * fade;
-          let lens = 0;
+          let falloff = 0;
 
           if (mouse.s > 0.01) {
             const dx = x - mouse.x;
             const dy = y - mouse.y;
             const d2 = dx * dx + dy * dy;
-            if (d2 < lensR * lensR) {
+            if (d2 < lensR2) {
               const d = Math.sqrt(d2) || 1;
               const k = 1 - d / lensR;
-              lens = k * k * (3 - 2 * k) * mouse.s;
-              r = r * (1 + lens * 0.85) + lens * maxR * 0.15 * local * fade;
-              const push = w < 768 ? 8 : 14;
-              x += (dx / d) * lens * push;
-              y += (dy / d) * lens * push;
+              falloff = smootherstep(k) * mouse.s;
+              // Magnify only existing gear structure — never invent dots in blank space
+              r *= 1 + falloff * 0.34;
+              x += (dx / d) * falloff * push;
+              y += (dy / d) * falloff * push;
             }
           }
 
           if (r < 0.22) continue;
-          if (lens > 0.25) {
-            lensDots[lensCount * 3] = x;
-            lensDots[lensCount * 3 + 1] = y;
-            lensDots[lensCount * 3 + 2] = r;
-            lensCount++;
-          } else {
-            ctx.moveTo(x + r, y);
-            ctx.arc(x, y, r, 0, TAU);
+
+          // Choose tonal bucket with subtle organic grain dither so the loupe has zero hard circle edge
+          let b = tone >= 0.44 ? 1 : 0;
+          if (falloff > 0.04) {
+            const hash = (((idx * 2654435761) >>> 24) / 255 - 0.5) * 0.16;
+            const lumBoost = clamp01(falloff * 1.15 + hash);
+            if (lumBoost > 0.78 && tone > 0.38) b = 5;
+            else if (lumBoost > 0.54) b = 4;
+            else if (lumBoost > 0.30) b = 3;
+            else if (lumBoost > 0.12) b = 2;
           }
+
+          const c = bucketCounts[b];
+          const arr = bucketData[b];
+          arr[c * 3] = x;
+          arr[c * 3 + 1] = y;
+          arr[c * 3 + 2] = r;
+          bucketCounts[b] = c + 1;
         }
       }
-      ctx.fill();
 
-      if (lensCount) {
-        ctx.fillStyle = klein;
+      for (let b = 0; b < BUCKETS; b++) {
+        const count = bucketCounts[b];
+        if (!count) continue;
+        const arr = bucketData[b];
+        ctx.fillStyle = palette[b];
         ctx.beginPath();
-        for (let i = 0; i < lensCount; i++) {
-          const x = lensDots[i * 3];
-          const y = lensDots[i * 3 + 1];
-          const r = lensDots[i * 3 + 2];
+        for (let i = 0; i < count; i++) {
+          const x = arr[i * 3];
+          const y = arr[i * 3 + 1];
+          const r = arr[i * 3 + 2];
           ctx.moveTo(x + r, y);
           ctx.arc(x, y, r, 0, TAU);
         }
@@ -192,8 +255,8 @@ export function Halftone({
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      gap = w < 640 ? 3.4 : w < 1024 ? 5.2 : 6.8;
-      lensR = w < 640 ? 78 : w < 1024 ? 125 : 170;
+      gap = w < 640 ? 3.2 : w < 1024 ? 4.6 : 5.4;
+      lensR = w < 640 ? 96 : w < 1024 ? 150 : 210;
       sample();
     };
 

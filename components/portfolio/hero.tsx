@@ -4,18 +4,15 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowDownRight } from "lucide-react";
 import { useRef } from "react";
 import { EASE } from "@/lib/portfolio-data";
+import { usePreferences } from "@/lib/preferences";
+import { cn } from "@/lib/utils";
 import { Halftone } from "./halftone";
 import { Label, MaskLines } from "./primitives";
 
 const PLATES = ["/images/movement.webp"];
 
-const particulars = [
-  { k: "Discipline", v: "Cloud infrastructure & DevOps" },
-  { k: "Estates", v: "AWS · Terraform · Docker" },
-  { k: "Practice", v: "Rabat, Morocco" },
-];
-
 export function Hero() {
+  const { t, lang } = usePreferences();
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -39,15 +36,11 @@ export function Hero() {
             transition={{ duration: 1.2, delay: 2.9, ease: EASE }}
             className="max-w-sm"
           >
-            <Label className="text-stone">
-              {"Sale Nº 26 · The Evening Session"}
-            </Label>
+            <Label className="text-stone">{t.hero.kicker}</Label>
             <p className="mt-3 font-serif text-[1.75rem] leading-[1.08] md:mt-4 md:text-[2.1rem]">
               Hicham El Hanafi
               <br />
-              <span className="italic text-stone">
-                {"Cloud & DevOps Engineer"}
-              </span>
+              <span className="italic text-stone">{t.hero.role}</span>
             </p>
           </motion.div>
 
@@ -57,9 +50,9 @@ export function Hero() {
             transition={{ duration: 1.4, delay: 3.1, ease: EASE }}
             className="hidden max-w-[17rem] bg-paper/95 px-2 py-1 text-right font-mono text-[12px] uppercase leading-relaxed tracking-[0.14em] text-stone md:block"
           >
-            {"Fig. 0 — A movement, keeping time."}
+            {t.hero.note[0]}
             <br />
-            {"Infrastructure should do the same, without supervision."}
+            {t.hero.note[1]}
           </motion.p>
         </motion.div>
 
@@ -72,15 +65,22 @@ export function Hero() {
         </div>
 
         <motion.div style={{ y: titleY }} className="mt-auto pt-4 md:pt-16">
-          <h1 className="font-serif text-[clamp(3.2rem,11.4vw,15.5rem)] font-normal leading-[0.84] tracking-[-0.04em] [text-shadow:0_0_36px_rgba(236,235,230,0.95)]">
+          <h1
+            className={cn(
+              lang === "fr"
+                ? "text-[clamp(2.9rem,10.2vw,14rem)]"
+                : "text-[clamp(3.2rem,11.4vw,15.5rem)]",
+              "font-serif font-normal leading-[0.84] tracking-[-0.04em] [text-shadow:0_0_36px_rgba(236,235,230,0.95)]"
+            )}
+          >
             <MaskLines
               immediate
               delay={2.95}
               stagger={0.14}
               lines={[
-                "Infrastructure,",
+                t.hero.title[0],
                 <span key="c" className="italic text-klein">
-                  considered.
+                  {t.hero.title[1]}
                 </span>,
               ]}
             />
@@ -96,9 +96,9 @@ export function Hero() {
             className="h-px origin-left bg-ink/25"
           />
           <div className="grid grid-cols-1 gap-x-6 gap-y-5 pt-5 sm:grid-cols-2 md:grid-cols-4">
-            {particulars.map((p, i) => (
+            {t.hero.particulars.map((p, i) => (
               <motion.div
-                key={p.k}
+                key={i}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1, delay: 3.25 + i * 0.08, ease: EASE }}
@@ -110,16 +110,16 @@ export function Hero() {
               </motion.div>
             ))}
             <motion.a
-              href="#lots"
+              href="#projects"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 3.5, ease: EASE }}
               className="group flex items-end justify-between gap-4 border-ink pt-2 sm:col-span-2 md:col-span-1 md:pt-0"
             >
               <span className="flex flex-col">
-                <Label className="text-klein">Lots I — II</Label>
+                <Label className="text-klein">{t.hero.ctaKicker}</Label>
                 <span className="relative mt-1 font-text text-2xl italic md:text-[1.75rem]">
-                  Explore the architecture
+                  {t.hero.cta}
                   <span
                     aria-hidden="true"
                     className="absolute -bottom-1 left-0 h-px w-full origin-right scale-x-100 bg-ink transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:origin-left group-hover:scale-x-0"

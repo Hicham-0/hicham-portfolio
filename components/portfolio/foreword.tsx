@@ -1,17 +1,11 @@
 "use client";
 
 import { motion, useScroll, useTransform, type MotionValue } from "framer-motion";
-import { useRef } from "react";
-import { tenets } from "@/lib/portfolio-data";
+import { useMemo, useRef } from "react";
+import { usePreferences } from "@/lib/preferences";
 import { Reveal, SectionHead, container } from "./primitives";
 
-const statement =
-  "The best systems are the ones you *never* *notice.* Complex beneath the surface, automatic in motion, and built to *last.*";
-
-const words = statement.split(" ").map((raw) => ({
-  text: raw.replace(/\*/g, ""),
-  emphasis: raw.startsWith("*"),
-}));
+const NUMERALS = ["I", "II", "III", "IV"];
 
 function Word({
   progress,
@@ -36,21 +30,31 @@ function Word({
 }
 
 export function Foreword() {
+  const { t, lang } = usePreferences();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start 0.85", "end 0.45"],
   });
 
+  const words = useMemo(
+    () =>
+      t.approach.statement.split(" ").map((raw) => ({
+        text: raw.replace(/\*/g, ""),
+        emphasis: raw.startsWith("*"),
+      })),
+    [t.approach.statement]
+  );
+
   return (
-    <section id="foreword" className="py-28 md:py-44">
+    <section id="approach" className="py-28 md:py-44">
       <div className={container}>
-        <SectionHead no="I" title="Foreword" note="Core principles" />
+        <SectionHead no="01" title={t.nav.approach} note={t.approach.note} />
 
         <div ref={ref} className="relative mt-16 md:mt-24">
           <p className="max-w-5xl font-serif text-[clamp(2.2rem,4.8vw,5.4rem)] leading-[1.04] tracking-[-0.025em]">
             {words.map((w, i) => (
-              <span key={i}>
+              <span key={`${lang}-${i}`}>
                 <Word
                   progress={scrollYProgress}
                   range={[i / words.length, (i + 1) / words.length]}
@@ -64,30 +68,30 @@ export function Foreword() {
         </div>
 
         <ol className="mt-24 grid gap-px bg-ink/15 md:mt-36 md:grid-cols-2 lg:grid-cols-4">
-          {tenets.map((t, i) => (
-            <li key={t.title} className="bg-paper">
+          {t.approach.tenets.map((tenet, i) => (
+            <li key={i} className="bg-paper">
               <Reveal
                 delay={i * 0.08}
                 className="group flex h-full flex-col p-6 pb-10 pt-8 md:p-8 md:pb-12"
               >
                 <div className="flex items-baseline justify-between">
                   <span className="font-mono text-xs uppercase tracking-[0.18em] text-klein">
-                    {`0${i + 1} // ${t.numeral}`}
+                    {`0${i + 1} // ${NUMERALS[i]}`}
                   </span>
                 </div>
 
                 <h3 className="mt-6 font-serif text-3xl font-normal tracking-[-0.02em] text-ink transition-colors duration-500 group-hover:text-klein md:text-4xl">
-                  {t.title}
+                  {tenet.title}
                 </h3>
 
                 <p className="mt-4 font-text text-lg leading-snug text-ink/75">
-                  {t.text}
+                  {tenet.text}
                 </p>
 
                 <div className="mt-auto pt-10">
                   <div className="h-px w-10 bg-klein/50 transition-[width,background-color] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-full group-hover:bg-klein" />
                   <p className="mt-3 font-mono text-[11.5px] uppercase tracking-[0.14em] text-stone">
-                    {t.spec}
+                    {tenet.spec}
                   </p>
                 </div>
               </Reveal>

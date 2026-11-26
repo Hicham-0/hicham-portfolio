@@ -2,13 +2,16 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { EASE, inventory } from "@/lib/portfolio-data";
+import { EASE } from "@/lib/portfolio-data";
+import { usePreferences } from "@/lib/preferences";
 import { cn } from "@/lib/utils";
 import { MaskLines, SectionHead, container } from "./primitives";
 
 export function Inventory() {
+  const { t, lang } = usePreferences();
   const [active, setActive] = useState(0);
-  const item = inventory[active];
+  const items = t.stack.items;
+  const item = items[active] ?? items[0];
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -67,10 +70,9 @@ export function Inventory() {
 
   return (
     <section
-      id="inventory"
+      id="stack"
       className="relative overflow-hidden bg-night-sky py-28 text-paper md:py-40 [&_::selection]:bg-paper [&_::selection]:text-night-sky"
     >
-      {/* Subtle Live Drifting Stratospheric Cloud Wisps */}
       <canvas
         ref={canvasRef}
         aria-hidden="true"
@@ -79,9 +81,9 @@ export function Inventory() {
 
       <div className={cn(container, "relative z-10")}>
         <SectionHead
-          no="III"
-          title="Inventory"
-          note="Five estates, as catalogued"
+          no="03"
+          title={t.nav.stack}
+          note={t.stack.note}
           tone="paper"
         />
 
@@ -89,25 +91,25 @@ export function Inventory() {
           <MaskLines
             lines={[
               <span key="line1" className="text-paper">
-                Everything in the cabinet,
+                {t.stack.title[0]}
               </span>,
               <span key="line2" className="italic text-klein-soft">
-                catalogued.
+                {t.stack.title[1]}
               </span>,
             ]}
           />
         </h2>
 
         <div className="mt-16 grid gap-12 md:mt-24 md:grid-cols-12">
-          <div role="tablist" aria-label="Estates" className="md:col-span-4">
-            {inventory.map((it, i) => (
+          <div role="tablist" aria-label={t.stack.tabsAria} className="md:col-span-4">
+            {items.map((it, i) => (
               <button
                 key={it.id}
                 type="button"
                 role="tab"
                 id={`tab-${it.id}`}
                 aria-selected={active === i}
-                aria-controls="inv-panel"
+                aria-controls="stack-panel"
                 onClick={() => setActive(i)}
                 onMouseEnter={() => setActive(i)}
                 className={cn(
@@ -125,14 +127,14 @@ export function Inventory() {
           </div>
 
           <div
-            id="inv-panel"
+            id="stack-panel"
             role="tabpanel"
             aria-labelledby={`tab-${item.id}`}
             className="min-h-[22rem] md:col-span-8"
           >
             <AnimatePresence mode="wait">
               <motion.div
-                key={item.id}
+                key={`${lang}-${item.id}`}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}

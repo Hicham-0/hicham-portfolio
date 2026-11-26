@@ -1,7 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { EASE, type Diagram, type DiagramNode } from '@/lib/portfolio-data'
+import { EASE, tx, type Diagram, type DiagramNode } from '@/lib/portfolio-data'
+import { usePreferences } from '@/lib/preferences'
 import { cn } from '@/lib/utils'
 
 const W = 100
@@ -49,6 +50,7 @@ export function Plate({
   animateIn?: boolean
   title: string
 }) {
+  const { lang, t } = usePreferences()
   const byId = Object.fromEntries(diagram.nodes.map((n) => [n.id, n]))
   const view = animateIn
     ? { initial: 'hidden' as const, whileInView: 'visible' as const, viewport: { once: true, margin: '-5% 0px' } }
@@ -59,7 +61,7 @@ export function Plate({
       viewBox="-20 -10 640 420"
       className={cn('h-full w-full', className)}
       role="img"
-      aria-label={`${title} architecture schematic`}
+      aria-label={`${title} — ${t.schematicAria}`}
       {...view}
     >
       <RegistrationMark x={-6} y={4} />
@@ -69,7 +71,7 @@ export function Plate({
 
       {diagram.groups.map((g, i) => (
         <motion.g
-          key={g.label}
+          key={i}
           variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
           transition={{ duration: 1.2, delay: 0.1 + i * 0.1, ease: EASE }}
         >
@@ -85,7 +87,7 @@ export function Plate({
             strokeWidth="0.75"
           />
           <text x={g.x + 8} y={g.y - 6} fill="var(--stone)" className="font-mono" fontSize="7.5" letterSpacing="2">
-            {g.label.toUpperCase()}
+            {tx(g.label, lang).toUpperCase()}
           </text>
         </motion.g>
       ))}
@@ -139,7 +141,7 @@ export function Plate({
             fontSize="8"
             letterSpacing="1.4"
           >
-            {n.label.toUpperCase()}
+            {tx(n.label, lang).toUpperCase()}
           </text>
           {n.sub && (
             <text
@@ -151,7 +153,7 @@ export function Plate({
               fontSize="11"
               fontStyle="italic"
             >
-              {n.sub}
+              {tx(n.sub, lang)}
             </text>
           )}
         </motion.g>
