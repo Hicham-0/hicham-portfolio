@@ -56,10 +56,10 @@ export function Hero() {
           </motion.p>
         </motion.div>
 
-        {/* High-Definition Horological Movement Canvas (340px tall on mobile so watch details shine) */}
+        {/* High-Definition Horological Movement Canvas */}
         <div
           aria-hidden="true"
-          className="relative my-4 h-[38svh] min-h-[290px] w-full md:absolute md:inset-y-0 md:left-auto md:right-[-4%] md:-z-10 md:my-0 md:h-auto md:w-[62%] md:[mask-image:linear-gradient(to_right,transparent,black_34%),linear-gradient(to_bottom,black_58%,transparent_90%)] md:[mask-composite:intersect] md:[-webkit-mask-composite:source-in]"
+          className="relative my-3 h-[42svh] min-h-[320px] w-full md:absolute md:inset-y-0 md:left-auto md:right-[-4%] md:-z-10 md:my-0 md:h-auto md:w-[62%] md:[mask-image:linear-gradient(to_right,transparent,black_34%),linear-gradient(to_bottom,black_58%,transparent_90%)] md:[mask-composite:intersect] md:[-webkit-mask-composite:source-in]"
         >
           <Halftone srcs={PLATES} progress={scrollYProgress} />
         </div>

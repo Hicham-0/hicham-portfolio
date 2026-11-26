@@ -99,27 +99,62 @@ export function Halftone({
       if (!o) return;
 
       const total = cols * rows;
+      const rawTones = new Float32Array(total);
       const nextTones = new Float32Array(total);
       o.fillStyle = "#fff";
       o.fillRect(0, 0, cols, rows);
-      const fit = w < 768 ? Math.min : Math.max;
-      const scale = fit(cols / image.width, rows / image.height) * 0.96;
+      const isMobile = w < 768;
+      const fit = isMobile ? Math.min : Math.max;
+      const scale = fit(cols / image.width, rows / image.height) * (isMobile ? 0.98 : 0.96);
       const iw = image.width * scale;
       const ih = image.height * scale;
       o.drawImage(image, (cols - iw) / 2, (rows - ih) / 2, iw, ih);
       const data = o.getImageData(0, 0, cols, rows).data;
 
-      // Crisp tonal curve: drops faint paper haze cleanly while sharpening gear teeth & bridges.
-      const gamma = w < 768 ? 1.18 : 1.06;
       for (let i = 0; i < total; i++) {
         const lum =
           (0.299 * data[i * 4] +
             0.587 * data[i * 4 + 1] +
             0.114 * data[i * 4 + 2]) /
           255;
-        const raw = 1 - lum;
-        nextTones[i] =
-          raw < 0.06 ? 0 : Math.pow(clamp01((raw - 0.05) / 0.88), gamma);
+        rawTones[i] = 1 - lum;
+      }
+
+      // On mobile screens, apply a subtle 3×3 unsharp-mask pass so fine gear teeth,
+      // spoked wheels, jewels, and bridges stay unmistakably crisp at smaller sizes.
+      if (isMobile) {
+        const amount = 0.72;
+        for (let row = 0; row < rows; row++) {
+          const r0 = Math.max(0, row - 1) * cols;
+          const r1 = row * cols;
+          const r2 = Math.min(rows - 1, row + 1) * cols;
+          for (let col = 0; col < cols; col++) {
+            const c0 = Math.max(0, col - 1);
+            const c2 = Math.min(cols - 1, col + 1);
+            const idx = r1 + col;
+            const center = rawTones[idx];
+            const blur =
+              (rawTones[r0 + c0] +
+                rawTones[r0 + col] +
+                rawTones[r0 + c2] +
+                rawTones[r1 + c0] +
+                center +
+                rawTones[r1 + c2] +
+                rawTones[r2 + c0] +
+                rawTones[r2 + col] +
+                rawTones[r2 + c2]) /
+              9;
+            const sharp = clamp01(center + (center - blur) * amount);
+            nextTones[idx] =
+              sharp < 0.08 ? 0 : Math.pow(clamp01((sharp - 0.07) / 0.8), 1.02);
+          }
+        }
+      } else {
+        for (let i = 0; i < total; i++) {
+          const raw = rawTones[i];
+          nextTones[i] =
+            raw < 0.06 ? 0 : Math.pow(clamp01((raw - 0.05) / 0.88), 1.06);
+        }
       }
 
       tones = nextTones;
@@ -157,7 +192,7 @@ export function Halftone({
       const scroll = progress?.get() ?? 0;
       const scrollCloudPart = clamp01(scroll * 1.35);
       const fade = 1 - clamp01(scroll * 1.2);
-      const maxR = gap * (w < 768 ? 0.56 : 0.55);
+      const maxR = gap * (w < 640 ? 0.51 : 0.55);
 
       ctx.clearRect(0, 0, w, h);
       bucketCounts.fill(0);
@@ -251,12 +286,12 @@ export function Halftone({
       w = rect.width;
       h = rect.height;
       if (!w || !h) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, w < 640 ? 3 : 2);
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      gap = w < 640 ? 3.2 : w < 1024 ? 4.6 : 5.4;
-      lensR = w < 640 ? 96 : w < 1024 ? 150 : 210;
+      gap = w < 640 ? 2.25 : w < 1024 ? 4.4 : 5.4;
+      lensR = w < 640 ? 86 : w < 1024 ? 150 : 210;
       sample();
     };
 
